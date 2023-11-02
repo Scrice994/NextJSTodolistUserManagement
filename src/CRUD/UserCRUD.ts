@@ -18,13 +18,11 @@ export class UserCRUD implements ICRUD<UserEntity>{
     }
 
     async readAll(obj: { [key: string]: unknown; }): Promise<UserEntity[]> {
-
         const result = await this.repository.browseAll(obj);
         return result;
     }
 
     async readOne(obj: { [key: string]: unknown; }, select?: string): Promise<UserEntity> {
-
         const result = await this.repository.browseOne(obj, select);
         return result;
     }
