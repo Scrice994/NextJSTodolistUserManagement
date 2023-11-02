@@ -10,7 +10,7 @@ describe("unit", () => {
                     email: "testEmail@gmail.com"
                 });
 
-                const findUser = await axios.get("http://localhost:4000");
+                const findUser = await axios.get("http://localhost:4000/find-users");
 
                 expect(createNewUser).toEqual([findUser]);
             });
