@@ -24,7 +24,12 @@ describe("unit", () => {
             email: "testEmail@gmail.com"
         }
 
-        describe("SignUp", () => {
+        const testLoginCredentials = {
+            username: "testUsername",
+            password: "testPassword",
+        }
+
+        describe("/signup", () => {
             it("Should return new saved user without password and email", async () => {
                 const createNewUser = await axios.post(userAPIBaseUrl + "/signup", testUser);
                 const { email, createdAt, updatedAt, ...createNewresult } = createNewUser.data;
@@ -58,15 +63,48 @@ describe("unit", () => {
                 expect(createUserWithSameEmail).toBe(undefined);
             });
 
-            it("Should return error when an uknown error occour in the server(ErrorHandler-test)", async () => {
-                const createNewUser = await axios.post("http://localhost:4000/signup")
+            it("Should return error when username is not provided(Validation-ErrorHandler-test)", async () => {
+                const createNewUser = await axios.post("http://localhost:4000/signup", {...testUser, username: ""})
                 .catch(err => {
-                    expect(err.response.status).toBe(500);
-                    expect(err.response.data).toEqual({ error: "An unknown error occour" });
+                    expect(err.response.status).toBe(400);
+                    expect(err.response.data).toEqual({ error: "body.username is a required field" });
                 });
 
                 expect(createNewUser).toBe(undefined);
             });
+        });
+
+        describe("/login", () => {
+            it("Should return logged user when successfully", async () => {
+                const createNewUser = await axios.post(userAPIBaseUrl + "/signup", testUser);
+                const { password, ...result} = createNewUser.data;
+
+                const logIn = await axios.post(userAPIBaseUrl + "/login", testLoginCredentials);
+                
+                expect(logIn.status).toBe(200);
+                expect(logIn.data).toEqual(result);
+            });
+
+            it("Should fail when username don't match",async () => {
+                const createNewUser = await axios.post(userAPIBaseUrl + "/signup", testUser);
+
+                const logIn = await axios.post(userAPIBaseUrl + "/login", {...testLoginCredentials, username: "notTestUsername" })
+                .catch( err => {
+                    expect(err.response.status).toBe(401);
+                    expect(err.response.data).toEqual("Unauthorized");
+                });
+            });
+
+            it("Should fail when password don't match",async () => {
+                const createNewUser = await axios.post(userAPIBaseUrl + "/signup", testUser);
+
+                const logIn = await axios.post(userAPIBaseUrl + "/login", {...testLoginCredentials, password: "notTestPassword" })
+                .catch( err => {
+                    expect(err.response.status).toBe(401);
+                    expect(err.response.data).toEqual("Unauthorized");
+                });
+            });
+
         });
     });
 });

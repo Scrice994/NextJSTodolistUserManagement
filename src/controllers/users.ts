@@ -8,7 +8,7 @@ import { UserCRUD } from "../CRUD/UserCRUD";
 import bcrypt from "bcrypt";
 import createHttpError from "http-errors";
 
-const USER_DATA_STORAGE = new MongoDataStorage<UserEntity>(UserModel);
+export const USER_DATA_STORAGE = new MongoDataStorage<UserEntity>(UserModel);
 const USER_REPOSITORY = new UserRepository(USER_DATA_STORAGE);
 const USER_CRUD = new UserCRUD(USER_REPOSITORY);
 

@@ -11,12 +11,12 @@ export class UserRepository implements IRepository<UserEntity>{
         return result; 
     }
 
-    async browseAll(obj: { [key: string]: unknown; }): Promise<UserEntity[]> {
+    async browseAll(obj: Partial<UserEntity>): Promise<UserEntity[]> {
         const result = await this.dataStorage.findAllEntities(obj);
         return result;
     }
 
-    async browseOne(obj: { [key: string]: unknown; }, select?: string): Promise<UserEntity> {
+    async browseOne(obj: Partial<UserEntity>, select?: string): Promise<UserEntity> {
         const result = await this.dataStorage.findOneEntityByKey(obj, select);
         return result;
     }
@@ -30,7 +30,7 @@ export class UserRepository implements IRepository<UserEntity>{
         throw new Error("Method not implemented.");
     }
 
-    async removeAll(obj: { [key: string]: unknown; }): Promise<UserEntity[]> {
+    async removeAll(obj: Partial<UserEntity>): Promise<UserEntity[]> {
         throw new Error("Method not implemented.");
     }
 

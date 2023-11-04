@@ -32,4 +32,4 @@ export const logInSchema = yup.object({
     })
 })
 
-export type logInSchema = yup.InferType<typeof logInSchema>["body"];
+export type LogInSchema = yup.InferType<typeof logInSchema>["body"];

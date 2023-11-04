@@ -1,8 +1,10 @@
 import createHttpError from "http-errors";
-import { IEntity } from "src/models/IEntity";
-import { UserEntity } from "src/models/UserEntity";
-import { IRepository } from "src/repositories/IRepository";
+import { IEntity } from "../models/IEntity";
+import { UserEntity } from "../models/UserEntity";
+import { IRepository } from "../repositories/IRepository";
 import { ICRUD } from "./ICRUD";
+
+type K = keyof UserEntity;
 
 export class UserCRUD implements ICRUD<UserEntity>{
     constructor(private repository: IRepository<UserEntity>){}
@@ -17,12 +19,12 @@ export class UserCRUD implements ICRUD<UserEntity>{
         return result;
     }
 
-    async readAll(obj: { [key: string]: unknown; }): Promise<UserEntity[]> {
+    async readAll(obj: Partial<UserEntity>): Promise<UserEntity[]> {
         const result = await this.repository.browseAll(obj);
         return result;
     }
 
-    async readOne(obj: { [key: string]: unknown; }, select?: string): Promise<UserEntity> {
+    async readOne(obj: Partial<UserEntity>, select?: string): Promise<UserEntity> {
         const result = await this.repository.browseOne(obj, select);
         return result;
     }
@@ -40,7 +42,7 @@ export class UserCRUD implements ICRUD<UserEntity>{
         throw new Error("Method not implemented.");
     }
 
-    async deleteAll(obj: { [key: string]: unknown; }): Promise<UserEntity[]> {
+    async deleteAll(obj: Partial<UserEntity>): Promise<UserEntity[]> {
         throw new Error("Method not implemented.");
     }
 }

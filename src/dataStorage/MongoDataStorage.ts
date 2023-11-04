@@ -11,7 +11,7 @@ export class MongoDataStorage<T extends IEntity> implements IDataStorage<T>{
         return result;
     }
 
-    async findAllEntities(obj: {[key: string]: unknown}): Promise<T[]> {
+    async findAllEntities(obj: Partial<T>): Promise<T[]> {
         const findAllEntities = await this._model.find(obj);
         return findAllEntities.map( item => {
             const { _id, __v, ...result } = item.toObject();
@@ -19,7 +19,7 @@ export class MongoDataStorage<T extends IEntity> implements IDataStorage<T>{
         });
     }
 
-    async findOneEntityByKey(obj: {[key: string]: unknown}, select?: string ): Promise<T> {
+    async findOneEntityByKey(obj: Partial<T>, select?: string ): Promise<T> {
         let findEntity;
 
         if(select){
@@ -56,7 +56,7 @@ export class MongoDataStorage<T extends IEntity> implements IDataStorage<T>{
         return result;
     }
 
-    async deleteAllEntities(obj: { [key: string]: unknown; }): Promise<T[]> {
+    async deleteAllEntities(obj: Partial<T>): Promise<T[]> {
         const entitiesToDelete = await this.findAllEntities(obj);
         await this._model.deleteMany(obj);
         return entitiesToDelete;
