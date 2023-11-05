@@ -22,11 +22,11 @@ describe("unit", () => {
                 expect(createToken).toEqual(testToken);
             });
 
-            it("Should return error when userId is not provided", async () => {
+            it("Should return error when username is not provided", async () => {
                 const createToken = await VERIFICATION_TOKEN_CRUD.create(testToken)
                 .catch(err => {
                     expect(err).toBeInstanceOf(BadRequest);
-                    expect(err.message).toEqual("Missing paramenter userId");
+                    expect(err.message).toEqual("Missing paramenter username");
                 })
             });
 

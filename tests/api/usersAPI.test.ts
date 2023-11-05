@@ -1,24 +1,17 @@
 import axios from "axios";
+import { VERIFICATION_CRUD } from "../../src/controllers/users";
+import { USER_CRUD } from "../../src/controllers/users";
 import { clearDB } from "./mongoTestUtils";
-import { UserCRUD } from "../../src/CRUD/UserCRUD";
-import { MongoDataStorage } from "../../src/dataStorage/MongoDataStorage";
-import { UserEntity } from "../../src/models/UserEntity";
-import { UserRepository } from "../../src/repositories/UserRepository";
-import UserModel from "../../src/models/mongo/userSchema";
-import { get } from "mongoose";
 
 describe("unit", () => {
     describe("userAPI", () => {
 
-        beforeEach( async () => {
-            await clearDB();
-        });
-
-        const USER_DATA_STORAGE = new MongoDataStorage<UserEntity>(UserModel);
-        const USER_REPOSITORY = new UserRepository(USER_DATA_STORAGE);
-        const USER_CRUD = new UserCRUD(USER_REPOSITORY);
+        // beforeEach( async () => {
+        //     await clearDB();
+        // });
 
         const userAPIBaseUrl = "http://localhost:4000";
+
         const testUser = {
             username: "testUsername",
             password: "testPassword",
@@ -40,6 +33,14 @@ describe("unit", () => {
 
                 expect(createNewUser.status).toBe(200);
                 expect(findUserResult).toEqual(createNewresult);
+            });
+
+            it("Should create a verificationToken in the db when successfull", async () => {
+                const createNewUser = await axios.post(userAPIBaseUrl + "/signup", testUser);
+
+                const findToken = await VERIFICATION_CRUD.readOne({ userId:  createNewUser.data.id });
+                
+                expect(findToken).toBeDefined();
             });
 
             it("Should return error when username is already taken", async () => {
@@ -112,7 +113,7 @@ describe("unit", () => {
         });
 
         describe("/logout", () => {
-            it("Should return success message when user logs in", async () => {
+            it("Should return success message when user logs out", async () => {
                 const createNewUser = await axios.post(userAPIBaseUrl + "/signup", testUser);
 
                 const logIn = await axios.post(userAPIBaseUrl + "/login", testLoginCredentials, {
@@ -166,6 +167,20 @@ describe("unit", () => {
                 });
 
                 expect(getUser).toBe(undefined);
+            });
+        });
+
+        describe("/account-verification", () => {
+            it("Should return updated user when successfully", async () => {
+                const createNewUser = await axios.post(userAPIBaseUrl + "/signup", testUser);
+                const { password, email, updatedAt, ...createdUser } = createNewUser.data;
+
+                const findToken = await VERIFICATION_CRUD.readOne({ userId: createdUser.id });
+
+                const accountVerification = await axios.get(userAPIBaseUrl + `/account-verification?userId=${findToken.userId}&verificationCode=${findToken.verificationCode}`);
+                const { updatedAt: updateAt2, ...updatedUser } = accountVerification.data;
+
+                expect({ ...createdUser, status: "Active" }).toEqual(updatedUser);
             });
         });
     });

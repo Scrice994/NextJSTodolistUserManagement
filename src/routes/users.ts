@@ -22,6 +22,8 @@ router.get("/oauth2/redirect/google", passport.authenticate('google', {
     keepSessionInfo: true
 }));
 
+router.get("/account-verification", UserControllers.accountVerification)
+
 router.post("/logout", requiresAuth, UserControllers.logout);
 
 export default router;

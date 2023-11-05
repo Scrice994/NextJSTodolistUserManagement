@@ -7,6 +7,7 @@ describe("unit", () => {
         const VERIFICATION_TOKEN_REPOSITORY = new VerificationTokenRepository(dataStorage);
 
         const testToken = {
+            id: "testtokeId",
             userId: "testUserId",
             verificationCode: "testVerificationCode"
         }
@@ -35,7 +36,7 @@ describe("unit", () => {
             it("Should call deleteEntity from the dataStorage", async () => {
                 dataStorage.deleteEntity.mockImplementationOnce(() => Promise.resolve(testToken));
 
-                const deleteToken = await VERIFICATION_TOKEN_REPOSITORY.removeOne(testToken.userId);
+                const deleteToken = await VERIFICATION_TOKEN_REPOSITORY.removeOne(testToken.id);
     
                 expect(deleteToken).toEqual(testToken);
             });

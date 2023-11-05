@@ -1,17 +1,26 @@
 import { RequestHandler } from "express";
+import bcrypt from "bcrypt";
+import createHttpError from "http-errors";
 import { MongoDataStorage } from "../dataStorage/MongoDataStorage";
 import { SignUpBody } from "../validation/users";
 import UserModel from "../models/mongo/userSchema";
+import verificationTokenModel from "../models/mongo/verificationTokenSchema";
 import { UserRepository } from "../repositories/UserRepository";
 import { UserEntity } from "../models/UserEntity";
 import { UserCRUD } from "../CRUD/UserCRUD";
-import bcrypt from "bcrypt";
-import createHttpError from "http-errors";
 import { assertIsDefined } from "../utils/assertIsDefined";
+import { VerificationTokenEntity } from "../models/VerificationTokenEntity";
+import { VerificationTokenRepository } from "../repositories/VeificationTokenRepository";
+import { VerificationTokenCRUD } from "../CRUD/VerificationTokenCRUD";
+import crypto from "crypto";
+import * as Email from "../utils/email";
 
-export const USER_DATA_STORAGE = new MongoDataStorage<UserEntity>(UserModel);
+const USER_DATA_STORAGE = new MongoDataStorage<UserEntity>(UserModel);
 const USER_REPOSITORY = new UserRepository(USER_DATA_STORAGE);
-const USER_CRUD = new UserCRUD(USER_REPOSITORY);
+export const USER_CRUD = new UserCRUD(USER_REPOSITORY);
+const VERIFICATION_STORAGE = new MongoDataStorage<VerificationTokenEntity>(verificationTokenModel);
+const VERIFICATION_REPOSITORY = new VerificationTokenRepository(VERIFICATION_STORAGE);
+export const VERIFICATION_CRUD = new VerificationTokenCRUD(VERIFICATION_REPOSITORY);
 
 export const getAuthenticatedUser: RequestHandler = async (req, res, next) => {
     const authenticatedUser = req.user;
@@ -40,6 +49,10 @@ export const signup: RequestHandler<unknown, unknown, SignUpBody, unknown> =  as
 
         const passwordHashed = await bcrypt.hash(passwordRaw, 10); 
 
+        const verificationCode = crypto.randomInt(100000, 999999).toString();
+
+        const verificationCodeHashed = await bcrypt.hash(verificationCode, 10);
+
         const newUser = await USER_CRUD.create({
             username,
             email,
@@ -50,7 +63,45 @@ export const signup: RequestHandler<unknown, unknown, SignUpBody, unknown> =  as
 
         delete newUser.password;
 
+        const verificationToken = await VERIFICATION_CRUD.create({
+            userId: newUser.id,
+            verificationCode: verificationCodeHashed
+        });
+
+        //Email.sendVerificationEmail(username, email, verificationCode);
+
         res.status(200).json(newUser);
+    } catch (error) {
+        next(error);
+    }
+}
+
+interface AccountVerificationQueryParams{
+    userId: string
+    verificationCode: string
+}
+
+export const accountVerification: RequestHandler<unknown, unknown, unknown, AccountVerificationQueryParams> = async (req, res, next) => {
+    const { userId, verificationCode } = req.query;
+    try {
+        assertIsDefined(userId);
+        assertIsDefined(verificationCode);
+
+        const findToken = await VERIFICATION_CRUD.readOne({ userId });
+        
+        if(!findToken){
+            throw createHttpError(404, "VerificationToken not found");
+        }
+
+        const verificationMatch = bcrypt.compare(verificationCode, findToken.verificationCode);
+
+        if(!verificationMatch){
+            throw createHttpError(401, "Unauthorized, your verificationCode is not valid");
+        }
+
+        const verifiedUser = await USER_CRUD.updateOne({ id: userId, status: "Active" });
+
+        res.status(200).json(verifiedUser);
     } catch (error) {
         next(error);
     }
