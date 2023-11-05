@@ -67,7 +67,7 @@ export const logout: RequestHandler = (req, res, next) => {
             } else {
                 throw error;
             }
-        })
+        });
     } catch (error) {
         next(error);
     }

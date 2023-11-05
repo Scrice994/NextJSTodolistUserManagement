@@ -23,6 +23,6 @@ userSchema.pre("validate", function (next) {
     next();
 });
 
-type User = InferSchemaType<typeof userSchema>
+type User = InferSchemaType<typeof userSchema>;
 
 export default model<User>("User", userSchema);

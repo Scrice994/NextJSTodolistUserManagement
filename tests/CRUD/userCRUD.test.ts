@@ -37,7 +37,7 @@ describe("unit", () => {
                 await crud.create(JSON.parse(JSON.stringify({ username: 'testUsername' })))
                 .catch( err => {
                     expect(err).toBeInstanceOf(BadRequest);
-                    expect(err.message);
+                    expect(err.message).toEqual("Missing parameter userRole");
                 });
             });
         });
