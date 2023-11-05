@@ -5,6 +5,7 @@ import { MongoDataStorage } from "../../src/dataStorage/MongoDataStorage";
 import { UserEntity } from "../../src/models/UserEntity";
 import { UserRepository } from "../../src/repositories/UserRepository";
 import UserModel from "../../src/models/mongo/userSchema";
+import { get } from "mongoose";
 
 describe("unit", () => {
     describe("userAPI", () => {
@@ -93,6 +94,8 @@ describe("unit", () => {
                     expect(err.response.status).toBe(401);
                     expect(err.response.data).toEqual("Unauthorized");
                 });
+
+                expect(logIn).toBe(undefined);
             });
 
             it("Should fail when password don't match",async () => {
@@ -103,8 +106,67 @@ describe("unit", () => {
                     expect(err.response.status).toBe(401);
                     expect(err.response.data).toEqual("Unauthorized");
                 });
+
+                expect(logIn).toBe(undefined);
+            });
+        });
+
+        describe("/logout", () => {
+            it("Should return success message when user logs in", async () => {
+                const createNewUser = await axios.post(userAPIBaseUrl + "/signup", testUser);
+
+                const logIn = await axios.post(userAPIBaseUrl + "/login", testLoginCredentials, {
+                    withCredentials: true
+                });
+
+                const logout = await axios.post(userAPIBaseUrl + "/logout", {}, {
+                    headers: {
+                        Cookie: logIn.headers["set-cookie"]![0].split(";")[0]
+                    },
+                    withCredentials: true
+                })
+
+                expect(logout.status).toBe(200);
+                expect(logout.data).toEqual({ success: "User logged out!"});
             });
 
+            it("Should return error and errorMessage(test Authorization-middleware)", async () => {
+                const logout = await axios.post(userAPIBaseUrl + "/logout")
+                .catch( err => {
+                    expect(err.response.status).toBe(401);
+                    expect(err.response.data).toEqual({ error: "User not authenticated" });
+                });
+
+                expect(logout).toBe(undefined);
+            });
+        });
+
+        describe("/me", () => {
+            it("Should return user when successfully", async () => {
+                const createNewUser = await axios.post(userAPIBaseUrl + "/signup", testUser);
+                const { password, email, ...result } = createNewUser.data;
+
+                const logIn = await axios.post(userAPIBaseUrl + "/login", testLoginCredentials);
+
+                const getUser = await axios.get(userAPIBaseUrl + "/me", {
+                    headers: {
+                        Cookie: logIn.headers["set-cookie"]![0].split(";")[0]
+                    }
+                })
+
+                expect(getUser.status).toBe(200);
+                expect(getUser.data).toEqual(result);
+            });
+
+            it("Should fail when user is not logged in", async () => {
+                const getUser = await axios.get(userAPIBaseUrl + "/me")
+                .catch( err => {
+                    expect(err.response.status).toBe(401);
+                    expect(err.response.data).toEqual({ error: "User not authenticated" });
+                });
+
+                expect(getUser).toBe(undefined);
+            });
         });
     });
 });
