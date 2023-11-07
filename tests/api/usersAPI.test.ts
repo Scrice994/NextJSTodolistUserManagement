@@ -1,21 +1,21 @@
 import axios from "axios";
-import { VERIFICATION_CRUD } from "../../src/controllers/users";
-import { USER_CRUD } from "../../src/controllers/users";
+import { USER_CRUD, VERIFICATION_CRUD } from "../../src/controllers/users";
 import { clearDB } from "./mongoTestUtils";
 
 describe("unit", () => {
-    describe("userAPI", () => {
 
-        // beforeEach( async () => {
-        //     await clearDB();
-        // });
+    describe("userAPI", () => {
+    
+        beforeEach( async () => {
+            await clearDB();
+        });
 
         const userAPIBaseUrl = "http://localhost:4000";
 
         const testUser = {
             username: "testUsername",
             password: "testPassword",
-            email: "testEmail@gmail.com"
+            email: "scrice994@gmail.com"
         }
 
         const testLoginCredentials = {
@@ -25,6 +25,7 @@ describe("unit", () => {
 
         describe("/signup", () => {
             it("Should return new saved user without password and email", async () => {
+
                 const createNewUser = await axios.post(userAPIBaseUrl + "/signup", testUser);
                 const { email, createdAt, updatedAt, ...createNewresult } = createNewUser.data;
 
@@ -33,6 +34,7 @@ describe("unit", () => {
 
                 expect(createNewUser.status).toBe(200);
                 expect(findUserResult).toEqual(createNewresult);
+
             });
 
             it("Should create a verificationToken in the db when successfull", async () => {

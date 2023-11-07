@@ -13,7 +13,7 @@ import { VerificationTokenEntity } from "../models/VerificationTokenEntity";
 import { VerificationTokenRepository } from "../repositories/VeificationTokenRepository";
 import { VerificationTokenCRUD } from "../CRUD/VerificationTokenCRUD";
 import crypto from "crypto";
-import * as Email from "../utils/email";
+import * as Email from "../utils/emailService";
 
 const USER_DATA_STORAGE = new MongoDataStorage<UserEntity>(UserModel);
 const USER_REPOSITORY = new UserRepository(USER_DATA_STORAGE);
@@ -68,7 +68,8 @@ export const signup: RequestHandler<unknown, unknown, SignUpBody, unknown> =  as
             verificationCode: verificationCodeHashed
         });
 
-        //Email.sendVerificationEmail(username, email, verificationCode);
+        
+        await Email.sendVerificationEmail(username, email, verificationCode);
 
         res.status(200).json(newUser);
     } catch (error) {
