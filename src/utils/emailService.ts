@@ -10,14 +10,14 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-export async function sendVerificationEmail(username: string, toEmail: string, verificationCode: string){
+export async function sendVerificationEmail(username: string, toEmail: string, userId: string, verificationCode: string){
     const mailOptions = {
         from: "noreply@todolist.com",
         to: toEmail,
         subject: "NextJS Todolist account verification",
         html: `<h1>Email Confirmation</h1>
         <p>Hello ${username}, please confirm your account by clicking on the following link</p>
-        <div><a href=http://localhost:3000/accountVerification?username=${username}&verificationCode=${verificationCode}>Click here</a></div>`
+        <div><a href=http://localhost:3000/account-verification?userId=${userId}&verificationCode=${verificationCode}>Click here</a></div>`
     };
 
     return await transporter.sendMail(mailOptions);

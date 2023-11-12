@@ -12,7 +12,7 @@ router.get("/me", requiresAuth, UserControllers.getAuthenticatedUser);
 
 router.post("/signup", validateRequestSchema(signupSchema), UserControllers.signup);
 
-router.post("/login", passport.authenticate("local"), validateRequestSchema(logInSchema), (req, res) => res.status(200).json(req.user));
+router.post("/login", passport.authenticate("local"), validateRequestSchema(logInSchema), UserControllers.login);
 
 router.get("/login/google", passport.authenticate('google'));
 
@@ -23,6 +23,8 @@ router.get("/oauth2/redirect/google", passport.authenticate('google', {
 }));
 
 router.get("/account-verification", UserControllers.accountVerification)
+
+router.get("/get-authorization", requiresAuth, UserControllers.getAuthorization);
 
 router.post("/logout", requiresAuth, UserControllers.logout);
 

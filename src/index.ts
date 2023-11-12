@@ -1,15 +1,14 @@
-import "dotenv/config";
 import cors from "cors";
+import "dotenv/config";
 import express from "express";
-import env from "./env";
-import passport from "passport";
-import userRoutes from "./routes/users";
-import errorHandler from "./middleware/errorHandler";
-import createHttpError from "http-errors";
 import session from "express-session";
-import sessionConfig from "./config/session";
+import createHttpError from "http-errors";
+import passport from "passport";
 import "./config/passport";
-
+import sessionConfig from "./config/session";
+import env from "./env";
+import errorHandler from "./middleware/errorHandler";
+import userRoutes from "./routes/users";
 
 export const app = express();
 

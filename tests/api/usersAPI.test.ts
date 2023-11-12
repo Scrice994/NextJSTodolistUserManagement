@@ -95,7 +95,7 @@ describe("unit", () => {
                 const logIn = await axios.post(userAPIBaseUrl + "/login", {...testLoginCredentials, username: "notTestUsername" })
                 .catch( err => {
                     expect(err.response.status).toBe(401);
-                    expect(err.response.data).toEqual("Unauthorized");
+                    expect(err.response.data).toEqual({ error: "Unauthorized"});
                 });
 
                 expect(logIn).toBe(undefined);
@@ -107,7 +107,7 @@ describe("unit", () => {
                 const logIn = await axios.post(userAPIBaseUrl + "/login", {...testLoginCredentials, password: "notTestPassword" })
                 .catch( err => {
                     expect(err.response.status).toBe(401);
-                    expect(err.response.data).toEqual("Unauthorized");
+                    expect(err.response.data).toEqual({ error: "Unauthorized"});
                 });
 
                 expect(logIn).toBe(undefined);

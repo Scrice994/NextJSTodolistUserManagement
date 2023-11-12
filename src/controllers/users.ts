@@ -1,18 +1,18 @@
-import { RequestHandler } from "express";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
+import { RequestHandler } from "express";
 import createHttpError from "http-errors";
+import { UserCRUD } from "../CRUD/UserCRUD";
+import { VerificationTokenCRUD } from "../CRUD/VerificationTokenCRUD";
 import { MongoDataStorage } from "../dataStorage/MongoDataStorage";
-import { SignUpBody } from "../validation/users";
+import { UserEntity } from "../models/UserEntity";
+import { VerificationTokenEntity } from "../models/VerificationTokenEntity";
 import UserModel from "../models/mongo/userSchema";
 import verificationTokenModel from "../models/mongo/verificationTokenSchema";
 import { UserRepository } from "../repositories/UserRepository";
-import { UserEntity } from "../models/UserEntity";
-import { UserCRUD } from "../CRUD/UserCRUD";
-import { assertIsDefined } from "../utils/assertIsDefined";
-import { VerificationTokenEntity } from "../models/VerificationTokenEntity";
 import { VerificationTokenRepository } from "../repositories/VeificationTokenRepository";
-import { VerificationTokenCRUD } from "../CRUD/VerificationTokenCRUD";
-import crypto from "crypto";
+import { assertIsDefined } from "../utils/assertIsDefined";
+import { LogInBody, SignUpBody } from "../validation/users";
 import * as Email from "../utils/emailService";
 
 const USER_DATA_STORAGE = new MongoDataStorage<UserEntity>(UserModel);
@@ -21,6 +21,14 @@ export const USER_CRUD = new UserCRUD(USER_REPOSITORY);
 const VERIFICATION_STORAGE = new MongoDataStorage<VerificationTokenEntity>(verificationTokenModel);
 const VERIFICATION_REPOSITORY = new VerificationTokenRepository(VERIFICATION_STORAGE);
 export const VERIFICATION_CRUD = new VerificationTokenCRUD(VERIFICATION_REPOSITORY);
+
+export const getAuthorization: RequestHandler = async (req, res, next) => {
+    try {
+        res.status(200).json(req.user);
+    } catch (error) {
+        next(error);
+    }
+}
 
 export const getAuthenticatedUser: RequestHandler = async (req, res, next) => {
     const authenticatedUser = req.user;
@@ -69,9 +77,17 @@ export const signup: RequestHandler<unknown, unknown, SignUpBody, unknown> =  as
         });
 
         
-        await Email.sendVerificationEmail(username, email, verificationCode);
+        await Email.sendVerificationEmail(username, email, newUser.id, verificationCode);
 
         res.status(200).json(newUser);
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const login: RequestHandler<unknown, unknown, LogInBody, unknown> = async (req, res, next) => {
+    try {
+        res.status(200).json({ user: req.user })
     } catch (error) {
         next(error);
     }
@@ -115,7 +131,7 @@ export const logout: RequestHandler = (req, res, next) => {
         });
         req.session.destroy( error => {
             if(!error){
-                res.clearCookie("connect.sid", { path: "/"}).status(200).json({ success: "User logged out!"})
+                res.status(200).json({ success: "User logged out!"})
             } else {
                 throw error;
             }

@@ -8,7 +8,10 @@ const sessionConfig: SessionOptions = {
     saveUninitialized: false,
     proxy: true,
     cookie: {
-        maxAge: 7 * 24 * 60 * 60 * 1000
+        path: '/',
+        httpOnly: true,
+        secure: false,
+        maxAge: 7 * 24 * 60 * 60 * 1000,
     },
     rolling: true,
     store: MongoStore.create({

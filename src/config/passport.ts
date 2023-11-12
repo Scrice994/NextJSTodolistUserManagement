@@ -36,6 +36,10 @@ passport.use(new LocalStrategy( async (username, password, cb) => {
             return cb(null, false);
         }
 
+        if(existingUser.status !== "Active"){
+            return cb(null, false);
+        }
+
         const user = existingUser;
 
         delete user.password;
