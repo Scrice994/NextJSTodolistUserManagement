@@ -33,3 +33,14 @@ export const logInSchema = yup.object({
 })
 
 export type LogInBody = yup.InferType<typeof logInSchema>["body"];
+
+const sendVerificationEmailSchema = yup.object({
+    body: yup.object({
+        username: usernameSchema.required(),
+        email: emailSchema.required(),
+        userId: yup.string().required(),
+        verificationCode: yup.string().required()
+    })
+})
+
+export type SendVerificationEmailBody = yup.InferType<typeof sendVerificationEmailSchema>["body"];

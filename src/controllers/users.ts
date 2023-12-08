@@ -13,7 +13,7 @@ import { UserRepository } from "../repositories/UserRepository";
 import { VerificationTokenRepository } from "../repositories/VeificationTokenRepository";
 import { assertIsDefined } from "../utils/assertIsDefined";
 import * as Email from "../utils/emailService";
-import { LogInBody, SignUpBody } from "../validation/users";
+import { LogInBody, SendVerificationEmailBody, SignUpBody } from "../validation/users";
 import axios from "axios";
 import env from "../env";
 
@@ -98,13 +98,6 @@ export const login: RequestHandler<unknown, unknown, LogInBody, unknown> = async
     } catch (error) {
         next(error);
     }
-}
-
-interface SendVerificationEmailBody{
-    username: string
-    email: string
-    userId: string
-    verificationCode: string
 }
 
 export const sendVerificationEmail: RequestHandler<unknown, unknown, SendVerificationEmailBody, unknown> = async (req, res, next) => {
