@@ -12,8 +12,10 @@ import verificationTokenModel from "../models/mongo/verificationTokenSchema";
 import { UserRepository } from "../repositories/UserRepository";
 import { VerificationTokenRepository } from "../repositories/VeificationTokenRepository";
 import { assertIsDefined } from "../utils/assertIsDefined";
-import { LogInBody, SignUpBody } from "../validation/users";
 import * as Email from "../utils/emailService";
+import { LogInBody, SignUpBody } from "../validation/users";
+import axios from "axios";
+import env from "../env";
 
 const USER_DATA_STORAGE = new MongoDataStorage<UserEntity>(UserModel);
 const USER_REPOSITORY = new UserRepository(USER_DATA_STORAGE);
@@ -55,6 +57,11 @@ export const signup: RequestHandler<unknown, unknown, SignUpBody, unknown> =  as
             throw createHttpError(409, "A user with this email address already exists. Please log in instead");
         }
 
+        const findExistingTenantId = await USER_CRUD.readOne({ tenantId });
+        if(findExistingTenantId){
+            throw createHttpError(409, "Group name already taken");
+        }
+
         const passwordHashed = await bcrypt.hash(passwordRaw, 10); 
 
         const verificationCode = crypto.randomInt(100000, 999999).toString();
@@ -75,10 +82,10 @@ export const signup: RequestHandler<unknown, unknown, SignUpBody, unknown> =  as
             userId: newUser.id,
             verificationCode: verificationCodeHashed
         });
-
         
-        await Email.sendVerificationEmail(username, email, newUser.id, verificationCode);
-
+        const sendEmail = await axios.post(env.SEND_VERIFICATION_EMAIL_URL, { username, email, userId: newUser.id, verificationCode });
+        console.log(sendEmail.data);
+        
         res.status(200).json(newUser);
     } catch (error) {
         next(error);
@@ -88,6 +95,23 @@ export const signup: RequestHandler<unknown, unknown, SignUpBody, unknown> =  as
 export const login: RequestHandler<unknown, unknown, LogInBody, unknown> = async (req, res, next) => {
     try {
         res.status(200).json({ user: req.user })
+    } catch (error) {
+        next(error);
+    }
+}
+
+interface SendVerificationEmailBody{
+    username: string
+    email: string
+    userId: string
+    verificationCode: string
+}
+
+export const sendVerificationEmail: RequestHandler<unknown, unknown, SendVerificationEmailBody, unknown> = async (req, res, next) => {
+    const { username, email, userId, verificationCode } = req.body
+    try {
+        await Email.sendVerificationEmail(username, email, userId, verificationCode);
+        res.status(200).json({message: "Email send successfully"});
     } catch (error) {
         next(error);
     }
@@ -136,6 +160,39 @@ export const logout: RequestHandler = (req, res, next) => {
                 throw error;
             }
         });
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const createNewGroupMember: RequestHandler<unknown, unknown, LogInBody, unknown> = async (req, res, next) => {
+    const { username, password: passwordRaw } = req.body;
+    const authenticatedUser = req.user;
+    try {
+        assertIsDefined(authenticatedUser);
+        const userMustBeAdmin = await USER_CRUD.readOne({ id: authenticatedUser.id });
+        if(userMustBeAdmin.userRole !== "Admin"){
+            throw createHttpError(403, "Must be Admin to access this resource");
+        }
+
+        const findExistingUsername = await USER_CRUD.readOne({ username });
+        if(findExistingUsername){
+            throw createHttpError(409, "Username already taken");
+        }
+
+        const passwordHashed = await bcrypt.hash(passwordRaw, 10);
+
+        const newUser = await USER_CRUD.create({
+            username,
+            password: passwordHashed,
+            tenantId: authenticatedUser.tenantId,
+            userRole: "Member",
+            status: "Active"
+        });
+
+        delete newUser.password;
+
+        res.status(200).json(newUser);
     } catch (error) {
         next(error);
     }

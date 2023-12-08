@@ -6,18 +6,17 @@ const userSchema = new Schema({
     username: { type: String, unique: true, sparse: true },
     email: { type: String, unique: true, sparse: true, select: false },
     password: { type: String, select: false },
-    userRole: { type: String, require: true },
+    userRole: { type: String, require: true, enum: ["Admin", "Member"] },
     status: { type: String, enum: ["Pending", "Active"], default: "Pending" },
     tenantId: { type: String },
     googleId: { type: String, unique: true, sparse: true, select: false },
-    githubId: { type: String, unique: true, sparse: true, select: false },
 }, { timestamps: true });
 
 userSchema.pre("validate", function (next) {
-    if(!this.password && !this.googleId && !this.githubId){
+    if(!this.password && !this.googleId){
         return next(new Error("User must have a password or social provider id"));
     }
-    if(!this.username && !this.googleId && !this.githubId){
+    if(!this.username && !this.googleId){
         return next(new Error("User must have a username or social provider id"));
     }
     next();

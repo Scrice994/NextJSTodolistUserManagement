@@ -10,6 +10,7 @@ const env = cleanEnv(process.env, {
     GOOGLE_CLIENT_SECRET: str(),
     SMTP_PASSWORD: str(),
     SMTP_MAIL: str(),
+    SEND_VERIFICATION_EMAIL_URL: str()
 });
 
 export default env;

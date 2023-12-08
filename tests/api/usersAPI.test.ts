@@ -2,6 +2,8 @@ import axios from "axios";
 import { USER_CRUD, VERIFICATION_CRUD } from "../../src/controllers/users";
 import { clearDB } from "./mongoTestUtils";
 
+const userAPIBaseUrl = "http://localhost:4000";
+
 describe("unit", () => {
 
     describe("userAPI", () => {
@@ -10,21 +12,26 @@ describe("unit", () => {
             await clearDB();
         });
 
-        const userAPIBaseUrl = "http://localhost:4000";
-
         const testUser = {
             username: "testUsername",
             password: "testPassword",
-            email: "scrice994@gmail.com"
+            email: "scrice994@gmail.com",
+            tenantId: "testTenantId"
         }
 
         const testLoginCredentials = {
             username: "testUsername",
             password: "testPassword",
         }
+        describe("testCallMockEmail", () => {
+            it("Should call the mockoon response", async () => {
+                const response = await axios.post("http://localhost:3005/send-verification-email");
+                console.log(response.data);
+            });
+        });
 
         describe("/signup", () => {
-            it("Should return new saved user without password and email", async () => {
+            it.only("Should return new saved user without password and email", async () => {
 
                 const createNewUser = await axios.post(userAPIBaseUrl + "/signup", testUser);
                 const { email, createdAt, updatedAt, ...createNewresult } = createNewUser.data;
@@ -153,7 +160,7 @@ describe("unit", () => {
 
                 const getUser = await axios.get(userAPIBaseUrl + "/me", {
                     headers: {
-                        Cookie: logIn.headers["set-cookie"]![0].split(";")[0]
+                        Cookie: logIn.headers["set-cookie"]
                     }
                 })
 
@@ -183,6 +190,27 @@ describe("unit", () => {
                 const { updatedAt: updateAt2, ...updatedUser } = accountVerification.data;
 
                 expect({ ...createdUser, status: "Active" }).toEqual(updatedUser);
+            });
+        });
+
+        describe("/create-member-account", () => {
+            it("Should create a new member account", async () => {
+                const createAdmin = await axios.post(userAPIBaseUrl + "/signup", testUser);
+                const findToken = await VERIFICATION_CRUD.readOne({ userId: createAdmin.data.id });
+                await axios.get(userAPIBaseUrl + `/account-verification?userId=${findToken.userId}&verificationCode=${findToken.verificationCode}`);
+                const logIn = await axios.post(userAPIBaseUrl + "/login", { username: testUser.username, password: testUser.password });
+                const createNewMember = await axios.post(userAPIBaseUrl + "/group/create-member-account", 
+                    { username: "testMemberUsername", password: "testMemberPassword" }, 
+                    { headers: {
+                            Cookie: logIn.headers["set-cookie"]
+                        }
+                    });
+                const { createdAt, updatedAt, ...memberResult } = createNewMember.data;
+
+                const findUser = await USER_CRUD.readOne({ id: createNewMember.data.id });
+                const { createdAt: createdAt2, updatedAt: updatedAt2, ...findResult } = findUser;
+
+                expect(findResult).toEqual(memberResult);
             });
         });
     });
