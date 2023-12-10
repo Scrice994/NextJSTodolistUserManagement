@@ -1,6 +1,7 @@
 import axios from "axios";
-import { USER_CRUD, VERIFICATION_CRUD } from "../../src/controllers/users";
-import { clearDB } from "./mongoTestUtils";
+import UserModel from "../../src/models/mongo/userSchema";
+import VerificationTokenModel from "../../src/models/mongo/verificationTokenSchema";
+import { clearDB, findOneEntityFromDb, initializeActiveAccount, initializeMemberAccount, initializePendingAccount } from "./mongoTestUtils";
 
 const userAPIBaseUrl = "http://localhost:4000";
 
@@ -15,41 +16,33 @@ describe("unit", () => {
         const testUser = {
             username: "testUsername",
             password: "testPassword",
-            email: "scrice994@gmail.com",
+            email: "testEmail@gmail.com",
             tenantId: "testTenantId"
-        }
+        };
 
         const testLoginCredentials = {
             username: "testUsername",
             password: "testPassword",
         }
-        describe("testCallMockEmail", () => {
-            it("Should call the mockoon response", async () => {
-                const response = await axios.post("http://localhost:3005/send-verification-email");
-                console.log(response.data);
-            });
-        });
 
         describe("/signup", () => {
-            it.only("Should return new saved user without password and email", async () => {
-
+            it("Should return new saved user without password and email when successfull", async () => {
                 const createNewUser = await axios.post(userAPIBaseUrl + "/signup", testUser);
-                const { email, createdAt, updatedAt, ...createNewresult } = createNewUser.data;
+                const { email, createdAt, updatedAt, ...newUser } = createNewUser.data;
 
-                const findUser = await USER_CRUD.readOne({});
-                const { createdAt: findCreatedAt, updatedAt: findUpdatedAt, ...findUserResult } = findUser;
+                const findUser = await findOneEntityFromDb(UserModel, { id: newUser.id });
 
                 expect(createNewUser.status).toBe(200);
-                expect(findUserResult).toEqual(createNewresult);
-
+                expect(findUser).toEqual(newUser);
             });
 
             it("Should create a verificationToken in the db when successfull", async () => {
                 const createNewUser = await axios.post(userAPIBaseUrl + "/signup", testUser);
 
-                const findToken = await VERIFICATION_CRUD.readOne({ userId:  createNewUser.data.id });
+                const findToken = await findOneEntityFromDb(VerificationTokenModel, { userId: createNewUser.data.id });
                 
                 expect(findToken).toBeDefined();
+                expect(findToken).toHaveProperty("verificationCode");
             });
 
             it("Should return error when username is already taken", async () => {
@@ -74,6 +67,17 @@ describe("unit", () => {
                 expect(createUserWithSameEmail).toBe(undefined);
             });
 
+            it("Should return error when tenantId is already taken", async () => {
+                await axios.post("http://localhost:4000/signup", testUser);
+                const createAccountWithSameTenantId = await axios.post("http://localhost:4000/signup", {...testUser, username: "notTestUsername", email: "notTestEmail@gmail.com" })
+                .catch( err => {
+                    expect(err.response.status).toBe(409);
+                    expect(err.response.data).toEqual({ error: "Group name already taken" });
+                });
+
+                expect(createAccountWithSameTenantId).toBeUndefined();
+            });
+
             it("Should return error when username is not provided(Validation-ErrorHandler-test)", async () => {
                 const createNewUser = await axios.post("http://localhost:4000/signup", {...testUser, username: ""})
                 .catch(err => {
@@ -87,43 +91,55 @@ describe("unit", () => {
 
         describe("/login", () => {
             it("Should return logged user when successfully", async () => {
-                const createNewUser = await axios.post(userAPIBaseUrl + "/signup", testUser);
-                const { password, ...result} = createNewUser.data;
+                const initializeUser = await initializeActiveAccount();
+                const { updatedAt, createdAt, password, ...newUser} = initializeUser;
 
                 const logIn = await axios.post(userAPIBaseUrl + "/login", testLoginCredentials);
-                
+                const { updatedAt: updateAt2, createdAt: createdAt2, ...loggedUser} = logIn.data;
+
                 expect(logIn.status).toBe(200);
-                expect(logIn.data).toEqual(result);
+                expect(loggedUser).toEqual(newUser);
             });
 
-            it("Should fail when username don't match",async () => {
-                const createNewUser = await axios.post(userAPIBaseUrl + "/signup", testUser);
+            it("Should return error when username is not valid",async () => {
+                await initializeActiveAccount();
 
                 const logIn = await axios.post(userAPIBaseUrl + "/login", {...testLoginCredentials, username: "notTestUsername" })
                 .catch( err => {
                     expect(err.response.status).toBe(401);
-                    expect(err.response.data).toEqual({ error: "Unauthorized"});
+                    expect(err.response.data).toEqual("Unauthorized");
                 });
 
-                expect(logIn).toBe(undefined);
+                expect(logIn).toBeUndefined();
             });
 
-            it("Should fail when password don't match",async () => {
-                const createNewUser = await axios.post(userAPIBaseUrl + "/signup", testUser);
+            it("Should return error when password is not valid",async () => {
+                await initializeActiveAccount();
 
                 const logIn = await axios.post(userAPIBaseUrl + "/login", {...testLoginCredentials, password: "notTestPassword" })
                 .catch( err => {
                     expect(err.response.status).toBe(401);
-                    expect(err.response.data).toEqual({ error: "Unauthorized"});
+                    expect(err.response.data).toEqual("Unauthorized");
                 });
 
-                expect(logIn).toBe(undefined);
+                expect(logIn).toBeUndefined();
+            });
+
+            it("Should return error when try to login into a 'Pending' account", async () => {
+                await axios.post(userAPIBaseUrl + "/signup", testUser);
+                const logIn = await axios.post(userAPIBaseUrl + "/login", testLoginCredentials)
+                .catch( err => {
+                    expect(err.response.status).toBe(401);
+                    expect(err.response.data).toEqual("Unauthorized");
+                });
+
+                expect(logIn).toBeUndefined();
             });
         });
 
         describe("/logout", () => {
             it("Should return success message when user logs out", async () => {
-                const createNewUser = await axios.post(userAPIBaseUrl + "/signup", testUser);
+                await initializeActiveAccount();
 
                 const logIn = await axios.post(userAPIBaseUrl + "/login", testLoginCredentials, {
                     withCredentials: true
@@ -131,7 +147,7 @@ describe("unit", () => {
 
                 const logout = await axios.post(userAPIBaseUrl + "/logout", {}, {
                     headers: {
-                        Cookie: logIn.headers["set-cookie"]![0].split(";")[0]
+                        Cookie: logIn.headers["set-cookie"]
                     },
                     withCredentials: true
                 })
@@ -139,22 +155,12 @@ describe("unit", () => {
                 expect(logout.status).toBe(200);
                 expect(logout.data).toEqual({ success: "User logged out!"});
             });
-
-            it("Should return error and errorMessage(test Authorization-middleware)", async () => {
-                const logout = await axios.post(userAPIBaseUrl + "/logout")
-                .catch( err => {
-                    expect(err.response.status).toBe(401);
-                    expect(err.response.data).toEqual({ error: "User not authenticated" });
-                });
-
-                expect(logout).toBe(undefined);
-            });
         });
 
         describe("/me", () => {
             it("Should return user when successfully", async () => {
-                const createNewUser = await axios.post(userAPIBaseUrl + "/signup", testUser);
-                const { password, email, ...result } = createNewUser.data;
+                const initializeUser = await initializeActiveAccount();
+                const { updatedAt, createdAt, email, password, ...newUser } = initializeUser;
 
                 const logIn = await axios.post(userAPIBaseUrl + "/login", testLoginCredentials);
 
@@ -163,9 +169,10 @@ describe("unit", () => {
                         Cookie: logIn.headers["set-cookie"]
                     }
                 })
-
+                const { updatedAt: updateAt2, createdAt: createdAt2, ...authenticatedUser} = getUser.data;
+    
                 expect(getUser.status).toBe(200);
-                expect(getUser.data).toEqual(result);
+                expect(authenticatedUser).toEqual(newUser);
             });
 
             it("Should fail when user is not logged in", async () => {
@@ -175,42 +182,133 @@ describe("unit", () => {
                     expect(err.response.data).toEqual({ error: "User not authenticated" });
                 });
 
-                expect(getUser).toBe(undefined);
+                expect(getUser).toBeUndefined();
             });
         });
 
         describe("/account-verification", () => {
-            it("Should return updated user when successfully", async () => {
-                const createNewUser = await axios.post(userAPIBaseUrl + "/signup", testUser);
-                const { password, email, updatedAt, ...createdUser } = createNewUser.data;
+            it("Should return updated user(status: 'Active') when successfully", async () => {
+                const createAccount = await initializePendingAccount();
+                const { user, token, verificationCode } = createAccount;
+                const { createdAt, updatedAt, email, password, ...newUser} = user;
 
-                const findToken = await VERIFICATION_CRUD.readOne({ userId: createdUser.id });
+                const accountVerification = await axios.get(userAPIBaseUrl + `/account-verification?userId=${token.userId}&verificationCode=${verificationCode}`);
+                const { createdAt: createdAt2, updatedAt: updateAt2, ...updatedUser } = accountVerification.data;
 
-                const accountVerification = await axios.get(userAPIBaseUrl + `/account-verification?userId=${findToken.userId}&verificationCode=${findToken.verificationCode}`);
-                const { updatedAt: updateAt2, ...updatedUser } = accountVerification.data;
+                expect({ ...newUser, status: "Active" }).toEqual(updatedUser);
+            });
 
-                expect({ ...createdUser, status: "Active" }).toEqual(updatedUser);
+            it("Should return error when token is not valid", async () => {
+                const createAccount = await initializePendingAccount();
+                const { user, token, verificationCode } = createAccount;
+                const { createdAt, updatedAt, email, password, ...newUser} = user;
+
+                const accountVerification = await axios.get(userAPIBaseUrl + `/account-verification?userId=${"fakeUserid"}&verificationCode=${verificationCode}`)
+                .catch( err => {
+                    expect(err.response.status).toBe(404);
+                    expect(err.response.data).toEqual({ error: "VerificationToken not found"});
+                });
+                
+                expect(accountVerification).toBeUndefined();
+            });
+
+            it("Should return error when verificationCode is not valid", async () => {
+                const createAccount = await initializePendingAccount();
+                const { user, token, verificationCode } = createAccount;
+                const { createdAt, updatedAt, email, password, ...newUser} = user;
+
+                const accountVerification = await axios.get(userAPIBaseUrl + `/account-verification?userId=${token.userId}&verificationCode=${"fakeVerificationCode"}`)
+                .catch( err => {
+                    expect(err.response.status).toBe(401);
+                    expect(err.response.data).toEqual({ error: "Unauthorized, your verificationCode is not valid"});
+                });
+
+                expect(accountVerification).toBeUndefined();
             });
         });
 
         describe("/create-member-account", () => {
             it("Should create a new member account", async () => {
-                const createAdmin = await axios.post(userAPIBaseUrl + "/signup", testUser);
-                const findToken = await VERIFICATION_CRUD.readOne({ userId: createAdmin.data.id });
-                await axios.get(userAPIBaseUrl + `/account-verification?userId=${findToken.userId}&verificationCode=${findToken.verificationCode}`);
+                await initializeActiveAccount();
                 const logIn = await axios.post(userAPIBaseUrl + "/login", { username: testUser.username, password: testUser.password });
+
                 const createNewMember = await axios.post(userAPIBaseUrl + "/group/create-member-account", 
                     { username: "testMemberUsername", password: "testMemberPassword" }, 
-                    { headers: {
+                    { headers: 
+                        {
                             Cookie: logIn.headers["set-cookie"]
                         }
-                    });
-                const { createdAt, updatedAt, ...memberResult } = createNewMember.data;
+                    }
+                );
+                const { createdAt, updatedAt, ...newMember } = createNewMember.data;
 
-                const findUser = await USER_CRUD.readOne({ id: createNewMember.data.id });
-                const { createdAt: createdAt2, updatedAt: updatedAt2, ...findResult } = findUser;
+                const findUser = await findOneEntityFromDb(UserModel, { id: newMember.id });
+                
+                expect(newMember).toEqual(findUser);
+            });
 
-                expect(findResult).toEqual(memberResult);
+            it("Should fail when account creator is not an Admin", async () => {
+                await initializeMemberAccount();
+                const logIn = await axios.post(userAPIBaseUrl + "/login", { username: "testUsername", password: "testPassword" });
+                
+                const createNewMember = await axios.post(userAPIBaseUrl + "/group/create-member-account", 
+                    { username: "testMemberUsername", password: "testMemberPassword" }, 
+                    { headers: 
+                        {
+                            Cookie: logIn.headers["set-cookie"]
+                        }
+                    }
+                )
+                .catch( err => {
+                    expect(err.response.status).toBe(403);
+                    expect(err.response.data).toEqual({error: "Must be Admin to access this resource"});
+                })
+
+                expect(createNewMember).toBeUndefined();
+            });
+
+            it("Should fail when the username for new member is already taken", async () => {
+                const newUser = await initializeActiveAccount();
+                const logIn = await axios.post(userAPIBaseUrl + "/login", { username: testUser.username, password: testUser.password });
+
+                const createNewMember = await axios.post(userAPIBaseUrl + "/group/create-member-account", 
+                    { username: newUser.username, password: "testMemberPassword" }, 
+                    { headers: 
+                        {
+                            Cookie: logIn.headers["set-cookie"]
+                        }
+                    }
+                )
+                .catch( err => {
+                    expect(err.response.status).toBe(409);
+                    expect(err.response.data).toEqual({error: "Username already taken"});
+                })
+
+                expect(createNewMember).toBeUndefined();
+            });
+        });
+
+        describe("/send-verification-email", () => {
+            it("Should return sent email when successfully", async () => {
+                const sendEmail = await axios.post(userAPIBaseUrl + "/send-verification-email", {
+                    username: "testUsername",
+                    email: "testEmail@gmail.com",
+                    userId: "testUserId",
+                    VerificationCode: "testVerificationCode"
+                });
+
+                expect(sendEmail).toBeDefined();
+                expect(sendEmail.data).toEqual(expect.objectContaining({
+                    accepted: expect.any(Array),
+                    rejected: expect.any(Array),
+                    ehlo: expect.any(Array),
+                    envelopeTime: expect.any(Number),
+                    messageTime: expect.any(Number),
+                    messageSize: expect.any(Number),
+                    response: expect.any(String),
+                    envelope: expect.any(Object),
+                    messageId: expect.any(String)
+                }));
             });
         });
     });

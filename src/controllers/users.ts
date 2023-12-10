@@ -1,3 +1,4 @@
+import axios from "axios";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { RequestHandler } from "express";
@@ -14,8 +15,6 @@ import { VerificationTokenRepository } from "../repositories/VeificationTokenRep
 import { assertIsDefined } from "../utils/assertIsDefined";
 import * as Email from "../utils/emailService";
 import { LogInBody, SendVerificationEmailBody, SignUpBody } from "../validation/users";
-import axios from "axios";
-import env from "../env";
 
 const USER_DATA_STORAGE = new MongoDataStorage<UserEntity>(UserModel);
 const USER_REPOSITORY = new UserRepository(USER_DATA_STORAGE);
@@ -64,10 +63,6 @@ export const signup: RequestHandler<unknown, unknown, SignUpBody, unknown> =  as
 
         const passwordHashed = await bcrypt.hash(passwordRaw, 10); 
 
-        const verificationCode = crypto.randomInt(100000, 999999).toString();
-
-        const verificationCodeHashed = await bcrypt.hash(verificationCode, 10);
-
         const newUser = await USER_CRUD.create({
             username,
             email,
@@ -77,14 +72,16 @@ export const signup: RequestHandler<unknown, unknown, SignUpBody, unknown> =  as
         });
 
         delete newUser.password;
+        
+        const verificationCode = crypto.randomInt(100000, 999999).toString();
+        const verificationCodeHashed = await bcrypt.hash(verificationCode, 10);
 
         const verificationToken = await VERIFICATION_CRUD.create({
             userId: newUser.id,
             verificationCode: verificationCodeHashed
         });
         
-        const sendEmail = await axios.post(env.SEND_VERIFICATION_EMAIL_URL, { username, email, userId: newUser.id, verificationCode });
-        console.log(sendEmail.data);
+        await axios.post("http://localhost:4000/send-verification-email", { username, email, userId: newUser.id, verificationCode });
         
         res.status(200).json(newUser);
     } catch (error) {
@@ -94,7 +91,7 @@ export const signup: RequestHandler<unknown, unknown, SignUpBody, unknown> =  as
 
 export const login: RequestHandler<unknown, unknown, LogInBody, unknown> = async (req, res, next) => {
     try {
-        res.status(200).json({ user: req.user })
+        res.status(200).json(req.user)
     } catch (error) {
         next(error);
     }
@@ -103,8 +100,8 @@ export const login: RequestHandler<unknown, unknown, LogInBody, unknown> = async
 export const sendVerificationEmail: RequestHandler<unknown, unknown, SendVerificationEmailBody, unknown> = async (req, res, next) => {
     const { username, email, userId, verificationCode } = req.body
     try {
-        await Email.sendVerificationEmail(username, email, userId, verificationCode);
-        res.status(200).json({message: "Email send successfully"});
+        const emailSent = await Email.sendVerificationEmail(username, email, userId, verificationCode);
+        res.status(200).json(emailSent);
     } catch (error) {
         next(error);
     }
@@ -127,7 +124,7 @@ export const accountVerification: RequestHandler<unknown, unknown, unknown, Acco
             throw createHttpError(404, "VerificationToken not found");
         }
 
-        const verificationMatch = bcrypt.compare(verificationCode, findToken.verificationCode);
+        const verificationMatch = await bcrypt.compare(verificationCode, findToken.verificationCode);
 
         if(!verificationMatch){
             throw createHttpError(401, "Unauthorized, your verificationCode is not valid");
@@ -164,11 +161,13 @@ export const createNewGroupMember: RequestHandler<unknown, unknown, LogInBody, u
     try {
         assertIsDefined(authenticatedUser);
         const userMustBeAdmin = await USER_CRUD.readOne({ id: authenticatedUser.id });
+
         if(userMustBeAdmin.userRole !== "Admin"){
             throw createHttpError(403, "Must be Admin to access this resource");
         }
 
         const findExistingUsername = await USER_CRUD.readOne({ username });
+
         if(findExistingUsername){
             throw createHttpError(409, "Username already taken");
         }

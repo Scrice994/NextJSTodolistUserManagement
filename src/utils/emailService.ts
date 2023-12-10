@@ -2,12 +2,14 @@ import nodemailer from "nodemailer";
 import env from "../env";
 
 const transporter = nodemailer.createTransport({
-    host: "smtp-relay.brevo.com",
-    port: 587,
+    host: env.SEND_VERIFICATION_EMAIL_URL,
+    port: env.SMTP_PORT,
+    secure: false,
+    ignoreTLS: true,
     auth: {
         user: env.SMTP_MAIL,
         pass: env.SMTP_PASSWORD,
-    }
+    },
 });
 
 export async function sendVerificationEmail(username: string, toEmail: string, userId: string, verificationCode: string){
