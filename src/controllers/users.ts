@@ -1,4 +1,3 @@
-import axios from "axios";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { RequestHandler } from "express";
@@ -12,16 +11,19 @@ import UserModel from "../models/mongo/userSchema";
 import verificationTokenModel from "../models/mongo/verificationTokenSchema";
 import { UserRepository } from "../repositories/UserRepository";
 import { VerificationTokenRepository } from "../repositories/VeificationTokenRepository";
+import { HttpClient } from "../utils/HttpClient";
 import { assertIsDefined } from "../utils/assertIsDefined";
 import * as Email from "../utils/emailService";
 import { LogInBody, SendVerificationEmailBody, SignUpBody } from "../validation/users";
 
 const USER_DATA_STORAGE = new MongoDataStorage<UserEntity>(UserModel);
 const USER_REPOSITORY = new UserRepository(USER_DATA_STORAGE);
-export const USER_CRUD = new UserCRUD(USER_REPOSITORY);
+const USER_CRUD = new UserCRUD(USER_REPOSITORY);
 const VERIFICATION_STORAGE = new MongoDataStorage<VerificationTokenEntity>(verificationTokenModel);
 const VERIFICATION_REPOSITORY = new VerificationTokenRepository(VERIFICATION_STORAGE);
-export const VERIFICATION_CRUD = new VerificationTokenCRUD(VERIFICATION_REPOSITORY);
+const VERIFICATION_CRUD = new VerificationTokenCRUD(VERIFICATION_REPOSITORY);
+const httpClient = new HttpClient();
+
 
 export const getAuthorization: RequestHandler = async (req, res, next) => {
     try {
@@ -81,7 +83,11 @@ export const signup: RequestHandler<unknown, unknown, SignUpBody, unknown> =  as
             verificationCode: verificationCodeHashed
         });
         
-        await axios.post("http://localhost:4000/send-verification-email", { username, email, userId: newUser.id, verificationCode });
+        await httpClient.sendRequest(
+            "http://localhost:4000/send-verification-email", {
+            method: 'post', 
+            body: { username, email, userId: newUser.id, verificationCode }
+        });
         
         res.status(200).json(newUser);
     } catch (error) {
