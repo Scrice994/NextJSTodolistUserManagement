@@ -1,7 +1,5 @@
 require("dotenv").config();
-const os = require("os");
-
-const SMTPServer = require("smtp-server").SMTPServer;
+import { SMTPServer } from "smtp-server";
 
 const server = new SMTPServer({
     secure: false,
