@@ -13,6 +13,13 @@ jobs:
         with:
           node-version: 18
 
+      - name: 'Create env file'
+        run: |
+          touch .env
+          echo SMTP_MAIL=scrice994@gmail.com >> .env
+          echo SMTP_PASSWORD=3z5XH6CDLjFgZQNn >> .env
+          cat .env
+
       - name: Start MongoDB 6.0
         uses: supercharge/mongodb-github-action@1.9.0
       
