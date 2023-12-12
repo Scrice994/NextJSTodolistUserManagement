@@ -12,7 +12,7 @@ router.get("/me", requiresAuth, UserControllers.getAuthenticatedUser);
 
 router.post("/signup", validateRequestSchema(signupSchema), UserControllers.signup);
 
-router.post("/login", passport.authenticate("local"), validateRequestSchema(logInSchema), UserControllers.login);
+router.post("/login", passport.authenticate("local", { failWithError: true, failureMessage: true }), validateRequestSchema(logInSchema), UserControllers.login, UserControllers.loginError);
 
 router.get("/login/google", passport.authenticate('google'));
 

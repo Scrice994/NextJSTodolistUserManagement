@@ -107,7 +107,7 @@ describe("unit", () => {
                 const logIn = await axios.post(userAPIBaseUrl + "/login", {...testLoginCredentials, username: "notTestUsername" })
                 .catch( err => {
                     expect(err.response.status).toBe(401);
-                    expect(err.response.data).toEqual("Unauthorized");
+                    expect(err.response.data).toEqual({ error: "Invalid credentials" });
                 });
 
                 expect(logIn).toBeUndefined();
@@ -119,7 +119,7 @@ describe("unit", () => {
                 const logIn = await axios.post(userAPIBaseUrl + "/login", {...testLoginCredentials, password: "notTestPassword" })
                 .catch( err => {
                     expect(err.response.status).toBe(401);
-                    expect(err.response.data).toEqual("Unauthorized");
+                    expect(err.response.data).toEqual({ error: "Invalid credentials" });
                 });
 
                 expect(logIn).toBeUndefined();
@@ -130,7 +130,7 @@ describe("unit", () => {
                 const logIn = await axios.post(userAPIBaseUrl + "/login", testLoginCredentials)
                 .catch( err => {
                     expect(err.response.status).toBe(401);
-                    expect(err.response.data).toEqual("Unauthorized");
+                    expect(err.response.data).toEqual({ error: "Please check your email inbox and verify your account" });
                 });
 
                 expect(logIn).toBeUndefined();
@@ -175,7 +175,7 @@ describe("unit", () => {
                 expect(authenticatedUser).toEqual(newUser);
             });
 
-            it("Should fail when user is not logged in", async () => {
+            it("Should return error when user is not logged in", async () => {
                 const getUser = await axios.get(userAPIBaseUrl + "/me")
                 .catch( err => {
                     expect(err.response.status).toBe(401);
@@ -247,7 +247,7 @@ describe("unit", () => {
                 expect(newMember).toEqual(findUser);
             });
 
-            it("Should fail when account creator is not an Admin", async () => {
+            it("Should return error when account creator is not an Admin", async () => {
                 await initializeMemberAccount();
                 const logIn = await axios.post(userAPIBaseUrl + "/login", { username: "testUsername", password: "testPassword" });
                 
@@ -267,7 +267,7 @@ describe("unit", () => {
                 expect(createNewMember).toBeUndefined();
             });
 
-            it("Should fail when the username for new member is already taken", async () => {
+            it("Should return error when the username for new member is already taken", async () => {
                 const newUser = await initializeActiveAccount();
                 const logIn = await axios.post(userAPIBaseUrl + "/login", { username: testUser.username, password: testUser.password });
 

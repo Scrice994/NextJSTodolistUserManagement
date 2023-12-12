@@ -37,17 +37,17 @@ passport.use(new LocalStrategy( async (username, password, cb) => {
         const existingUser = await USER_CRUD.readOne({ username }, "+email +password");
 
         if(!existingUser || !existingUser.password){
-            return cb(null, false);
+            return cb(null, false, { message: "Invalid credentials" });
         }
 
         const passwordMatch = await bcrypt.compare(password, existingUser.password);
 
         if(!passwordMatch){
-            return cb(null, false);
+            return cb(null, false, { message: "Invalid credentials" });
         }
 
         if(existingUser.status !== "Active"){
-            return cb(null, false);
+            return cb(null, false, { message: "Please check your email inbox and verify your account" });
         }
 
         const user = existingUser;

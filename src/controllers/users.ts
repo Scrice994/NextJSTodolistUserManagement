@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import crypto from "crypto";
-import { RequestHandler } from "express";
+import { ErrorRequestHandler, RequestHandler } from "express";
 import createHttpError from "http-errors";
 import { UserCRUD } from "../CRUD/UserCRUD";
 import { VerificationTokenCRUD } from "../CRUD/VerificationTokenCRUD";
@@ -98,6 +98,15 @@ export const signup: RequestHandler<unknown, unknown, SignUpBody, unknown> =  as
 export const login: RequestHandler<unknown, unknown, LogInBody, unknown> = async (req, res, next) => {
     try {
         res.status(200).json(req.user)
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const loginError: ErrorRequestHandler = async (err, req, res , next) => {
+    try {
+        assertIsDefined(req.session.messages);
+        throw createHttpError(err.status, req.session.messages[0])
     } catch (error) {
         next(error);
     }
