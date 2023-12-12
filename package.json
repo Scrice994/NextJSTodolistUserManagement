@@ -7,7 +7,7 @@
     "build": "npx tsc",
     "start": "node dist/server.js",
     "start:dev": "nodemon --esm src/server.ts",
-    "start:mock": "nodemon mockSMTPServer/index.js",
+    "start:mock": "node mockSMTPServer/index.js",
     "lint": "eslint . --ext -ts",
     "test": "jest --config ./jest.config.js",
     "test:api": "jest --config ./jest.api.config.js"
