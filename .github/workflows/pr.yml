@@ -13,6 +13,9 @@ jobs:
         with:
           node-version: 18
 
+      - name: npm-ci
+        run: npm ci
+
       - name: 'Create env file'
         run: |
           touch .env
@@ -25,9 +28,6 @@ jobs:
       
       - name: Start mail mock server
         run: npm run start:mock
-
-      - name: npm-ci
-        run: npm ci
 
       - name: unit
         run: npm run test:unit
