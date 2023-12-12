@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "jest": {
+    "modulePathIgnorePatterns": [
+      "dist/"
+    ],
   "scripts": {
     "build": "npx tsc",
     "start": "node dist/server.js",
