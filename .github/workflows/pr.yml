@@ -15,7 +15,9 @@ jobs:
       
       - name: 'Create env file'
         run: |
-          echo "${{ secrets.ENV_VARS }}" > .env
+          touch .env
+          echo ${{ secrets.ENV_VARS }} >> .env
+          cat .env
 
       - name: npm-ci
         run: npm ci
