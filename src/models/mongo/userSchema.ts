@@ -1,5 +1,5 @@
 import { InferSchemaType, Schema, model } from "mongoose";
-import * as uuid from 'uuid';
+import * as uuid from "uuid";
 
 const userSchema = new Schema({
     id: { default: uuid.v4, type: String, unique: true },
