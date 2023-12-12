@@ -6,7 +6,7 @@
   "jest": {
     "modulePathIgnorePatterns": [
       "dist/"
-    ],
+    ]},
   "scripts": {
     "build": "npx tsc",
     "start": "node dist/server.js",
