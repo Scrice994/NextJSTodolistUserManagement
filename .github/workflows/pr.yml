@@ -12,10 +12,14 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
+      
+      - name: 'Create env file'
+        run: |
+          echo "${{ secrets.env }}" > .env
 
       - name: npm-ci
         run: npm ci
-        
+
       - name: Start MongoDB 6.0
         uses: supercharge/mongodb-github-action@1.9.0
       
