@@ -27,7 +27,7 @@ jobs:
         uses: supercharge/mongodb-github-action@1.9.0
       
       - name: Start mail mock server
-        run: npm run start:mock
+        run: npm run start:mock &
 
       - name: unit
         run: npm run test:unit
