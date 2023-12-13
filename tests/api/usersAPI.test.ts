@@ -27,8 +27,6 @@ describe("unit", () => {
 
         describe("/signup", () => {
             it("Should return new saved user without password and email when successfull", async () => {
-                const createNewUser2 = await axios.post(userAPIBaseUrl + "/signup", {...testUser, username: "asd", password: "asd", email: "asdasd@asd.com", tenantId: "asdasdasd"})
-                .catch( err => console.log(err.response));
                 const createNewUser = await axios.post(userAPIBaseUrl + "/signup", testUser);
                 const { email, createdAt, updatedAt, ...newUser } = createNewUser.data;
                 console.log(createNewUser);
