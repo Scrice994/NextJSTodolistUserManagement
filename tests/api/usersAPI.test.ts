@@ -29,7 +29,7 @@ describe("unit", () => {
             it("Should return new saved user without password and email when successfull", async () => {
                 const createNewUser = await axios.post(userAPIBaseUrl + "/signup", testUser);
                 const { email, createdAt, updatedAt, ...newUser } = createNewUser.data;
-                console.log(createNewUser);
+
                 const findUser = await findOneEntityFromDb(UserModel, { id: newUser.id });
 
                 expect(createNewUser.status).toBe(200);
