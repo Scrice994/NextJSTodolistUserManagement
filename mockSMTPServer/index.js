@@ -1,8 +1,8 @@
 require("dotenv").config();
-
 const SMTPServer = require("smtp-server").SMTPServer;
 
 const server = new SMTPServer({
+    name: "127.0.0.1",
     secure: false,
     disabledCommands: ["STARTTLS"],
     onAuth(auth, session, cb) {
@@ -20,6 +20,6 @@ const server = new SMTPServer({
     }
 });
 
-server.listen(process.env.SMTP_PORT, () => {
+server.listen(process.env.SMTP_PORT, "127.0.0.1",() => {
     console.log("Mail mock server UP!!!");
 });
