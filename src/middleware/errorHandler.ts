@@ -5,15 +5,15 @@ const ErrorHandler: ErrorRequestHandler = (error, req, res, next) => {
 
     console.log(error);
 
-    let status = 500;
-    let errorMessage = "An unknown error occour";
+    let status = error.status || 500;
+    let errorMessage = error.message || "An unknown error occour";
 
     if(isHttpError(error)){
         status = error.status;
         errorMessage = error.message
     }
 
-    res.status(status).json(error);
+    res.status(status).json({ error: errorMessage });
 }
 
 export default ErrorHandler;
