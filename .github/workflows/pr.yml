@@ -32,9 +32,6 @@ jobs:
 
       - name: Start MongoDB 6.0
         uses: supercharge/mongodb-github-action@1.9.0
-      
-      - name: Start mail mock server
-        run: npm run start:mock &
 
       - name: unit
         run: npm run test:unit
@@ -44,6 +41,7 @@ jobs:
 
       - name: server start
         run: |
+          npm run start:mock &
           npm start &
           npm run test:api
           
