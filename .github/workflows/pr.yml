@@ -3,6 +3,19 @@ on:
   push:
   workflow_dispatch:
 
+env:
+  TODOLIST_BACKEND_URL: http://localhost:8080
+  WEBSITE_URL: http://localhost:3000
+  SERVER_URL: http://localhost:4000
+  PORT: 4000
+  SEND_VERIFICATION_EMAIL_URL: DESKTOP-MRA7G1L
+  SMTP_PORT: 3005
+  GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+  GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+  SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+  SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+  SMTP_MAIL: ${{ secrets.SMTP_MAIL }}
+
 jobs:
   build:
     name: Build
@@ -24,11 +37,6 @@ jobs:
 
       - name: unit
         run: npm run test:unit
-
-      - name: 'Create env file'
-        run: |
-          touch .env
-          echo ${{ secrets.ENV_VARS }} > ./.env
 
       - name: build
         run: npm run build
