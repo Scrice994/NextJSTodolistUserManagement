@@ -42,7 +42,7 @@ jobs:
         run: npm run build
 
       - name: server start
-        run: npm start 
+        run: npm start &
           
       - name: test-api
         run: npm run test:api
