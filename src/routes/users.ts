@@ -26,8 +26,6 @@ router.post("/send-verification-email", UserControllers.sendVerificationEmail);
 
 router.get("/account-verification", UserControllers.accountVerification);
 
-router.get("/get-authorization", requiresAuth, UserControllers.getAuthorization);
-
 router.post("/group/create-member-account", requiresAuth, UserControllers.createNewGroupMember);
 
 router.post("/logout", requiresAuth, UserControllers.logout);

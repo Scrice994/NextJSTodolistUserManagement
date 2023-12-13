@@ -24,15 +24,6 @@ const VERIFICATION_REPOSITORY = new VerificationTokenRepository(VERIFICATION_STO
 const VERIFICATION_CRUD = new VerificationTokenCRUD(VERIFICATION_REPOSITORY);
 const httpClient = new HttpClient();
 
-
-export const getAuthorization: RequestHandler = async (req, res, next) => {
-    try {
-        res.status(200).json(req.user);
-    } catch (error) {
-        next(error);
-    }
-}
-
 export const getAuthenticatedUser: RequestHandler = async (req, res, next) => {
     const authenticatedUser = req.user;
     try {
