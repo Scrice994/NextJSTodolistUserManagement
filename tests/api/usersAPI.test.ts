@@ -27,16 +27,15 @@ describe("unit", () => {
 
         describe("/signup", () => {
             it("Should return new saved user without password and email when successfull", async () => {
-                const createNewUser = await axios.post(userAPIBaseUrl + "/signup", testUser).catch(
-                    err => console.log(err.response)
-                );
-                // const { email, createdAt, updatedAt, ...newUser } = createNewUser.data;
+                const createNewUser2 = await axios.post(userAPIBaseUrl + "/signup", {...testUser, username: "asd", password: "asd", email: "asdasd@asd.com", tenantId: "asdasdasd"})
+                .catch( err => console.log(err.response));
+                const createNewUser = await axios.post(userAPIBaseUrl + "/signup", testUser);
+                const { email, createdAt, updatedAt, ...newUser } = createNewUser.data;
                 console.log(createNewUser);
-                // const findUser = await findOneEntityFromDb(UserModel, { id: newUser.id });
+                const findUser = await findOneEntityFromDb(UserModel, { id: newUser.id });
 
-                // expect(createNewUser.status).toBe(200);
-                // expect(findUser).toEqual(newUser);
-                expect(30).toBe(undefined);
+                expect(createNewUser.status).toBe(200);
+                expect(findUser).toEqual(newUser);
             });
 
             it("Should create a verificationToken in the db when successfull", async () => {
