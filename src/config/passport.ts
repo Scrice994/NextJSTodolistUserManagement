@@ -17,8 +17,9 @@ const USER_CRUD = new UserCRUD(USER_REPOSITORY);
 passport.serializeUser((user, cb) => {
     const serializedUser = {
         id: user.id,
-        tenantId: user.tenantId
-    }
+        tenantId: user.tenantId,
+        userRole: user.userRole
+    };
     
     cb(null, serializedUser);
 });
@@ -26,8 +27,9 @@ passport.serializeUser((user, cb) => {
 passport.deserializeUser((serializedUser: Express.User, cb) => {
     const user = {
         id: serializedUser.id,
-        tenantId: serializedUser.tenantId
-    }
+        tenantId: serializedUser.tenantId,
+        userRole: serializedUser.userRole
+    };
 
     cb(null, user);
 });

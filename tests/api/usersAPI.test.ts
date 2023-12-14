@@ -247,7 +247,7 @@ describe("unit", () => {
                 expect(newMember).toEqual(findUser);
             });
 
-            it("Should return error when account creator is not an Admin", async () => {
+            it("Should return error when account creator is not an Admin(authorization middleware test)", async () => {
                 await initializeMemberAccount();
                 const logIn = await axios.post(userAPIBaseUrl + "/login", { username: "testUsername", password: "testPassword" });
                 
@@ -261,7 +261,7 @@ describe("unit", () => {
                 )
                 .catch( err => {
                     expect(err.response.status).toBe(403);
-                    expect(err.response.data).toEqual({error: "Must be Admin to access this resource"});
+                    expect(err.response.data).toEqual({ error: "Unauthorized" });
                 })
 
                 expect(createNewMember).toBeUndefined();

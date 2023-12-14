@@ -8,6 +8,6 @@ const verificationTokenSchema = new Schema({
     createdAt: { type: Date, default: Date.now, expires: "10m" }
 });
 
-type VerificationTokenCode = InferSchemaType<typeof verificationTokenSchema>;
+type VerificationToken = InferSchemaType<typeof verificationTokenSchema>;
 
-export default model<VerificationTokenCode>("verificationToken", verificationTokenSchema);
+export default model<VerificationToken>("verificationToken", verificationTokenSchema);

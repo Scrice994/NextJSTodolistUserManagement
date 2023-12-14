@@ -5,6 +5,7 @@ declare global {
         export interface User{
             id: string
             tenantId?: string
+            userRole: string
         }
     }
 }

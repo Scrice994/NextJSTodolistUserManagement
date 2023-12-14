@@ -166,11 +166,6 @@ export const createNewGroupMember: RequestHandler<unknown, unknown, LogInBody, u
     const authenticatedUser = req.user;
     try {
         assertIsDefined(authenticatedUser);
-        const userMustBeAdmin = await USER_CRUD.readOne({ id: authenticatedUser.id });
-
-        if(userMustBeAdmin.userRole !== "Admin"){
-            throw createHttpError(403, "Must be Admin to access this resource");
-        }
 
         const findExistingUsername = await USER_CRUD.readOne({ username });
 
