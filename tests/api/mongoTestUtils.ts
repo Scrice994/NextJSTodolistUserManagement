@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
 import UserModel from "../../src/models/mongo/userSchema";
 import bcrypt from "bcrypt";
-import { UserEntity } from "src/models/UserEntity";
-import { VerificationTokenEntity } from "src/models/VerificationTokenEntity";
+import { UserEntity } from "../../src/models/UserEntity";
+import { VerificationTokenEntity } from "../../src/models/VerificationTokenEntity";
 import crypto from "crypto";
 import verificationTokenModel from "../../src/models/mongo/verificationTokenSchema";
 
