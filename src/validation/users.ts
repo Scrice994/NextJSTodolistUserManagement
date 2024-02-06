@@ -44,3 +44,11 @@ const sendVerificationEmailSchema = yup.object({
 })
 
 export type SendVerificationEmailBody = yup.InferType<typeof sendVerificationEmailSchema>["body"];
+
+const changeUsernameSchema = yup.object({
+    body: yup.object({
+        username: usernameSchema.required(),
+    })
+})
+
+export type ChangeUsernameBody = yup.InferType<typeof changeUsernameSchema>["body"];

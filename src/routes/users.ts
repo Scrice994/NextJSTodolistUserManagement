@@ -23,6 +23,8 @@ router.get("/oauth2/redirect/google", passport.authenticate('google', {
     keepSessionInfo: true
 }));
 
+router.put("/change-username", requiresAuthen, UserControllers.changeUsername);
+
 router.post("/send-verification-email", UserControllers.sendVerificationEmail);
 
 router.get("/account-verification", UserControllers.accountVerification);

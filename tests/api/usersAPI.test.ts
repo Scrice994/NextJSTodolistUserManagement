@@ -1,11 +1,11 @@
 import axios from "axios";
 import UserModel from "../../src/models/mongo/userSchema";
 import VerificationTokenModel from "../../src/models/mongo/verificationTokenSchema";
-import { clearDB, findOneEntityFromDb, initializeActiveAccount, initializeMemberAccount, initializePendingAccount } from "./mongoTestUtils";
+import { clearDB, findOneEntityFromDb, initializeActiveAccount, initializeActiveAccountNoTenantId, initializeMemberAccount, initializePendingAccount } from "./mongoTestUtils";
 
 const userAPIBaseUrl = "http://localhost:4000";
 
-describe("unit", () => {
+describe("api", () => {
 
     describe("userAPI", () => {
     
@@ -186,6 +186,62 @@ describe("unit", () => {
             });
         });
 
+        describe("/change-username", () => {
+            it("Should return user with updated username", async () => {
+                const initializeUser = await initializeActiveAccount();
+                const { updatedAt, createdAt, email, password, ...newUser } = initializeUser;
+
+                const logIn = await axios.post(userAPIBaseUrl + "/login", testLoginCredentials);
+
+                const userWithNewUsername = await axios.put(userAPIBaseUrl + "/change-username", { username: "usernameUpdated" }, {
+                    headers: {
+                        Cookie: logIn.headers["set-cookie"]
+                    }
+                })
+                
+                const { updatedAt: updateAt2, createdAt: createdAt2, ...result} = userWithNewUsername.data;
+                
+                expect(userWithNewUsername.status).toBe(200);
+                expect(result).toEqual({ ...newUser, username: "usernameUpdated" });
+            });
+
+            it("Should return erro if username provided is invalid", async () => {
+                const initializeUser = await initializeActiveAccount();
+                const { updatedAt, createdAt, email, password, ...newUser } = initializeUser;
+
+                const logIn = await axios.post(userAPIBaseUrl + "/login", testLoginCredentials);
+
+                const userWithNewUsername = await axios.put(userAPIBaseUrl + "/change-username", { username: "" }, {
+                    headers: {
+                        Cookie: logIn.headers["set-cookie"]
+                    }
+                }).catch( err => {
+                    expect(err.response.status).toBe(400);
+                    expect(err.response.data).toEqual({ error: "Invalid username" });
+                });
+
+                expect(userWithNewUsername).toBeUndefined();
+            });
+
+            it("Should return error if username provided already exist", async () => {
+                const initializeUser = await initializeActiveAccount();
+                const { updatedAt, createdAt, email, password, ...newUser } = initializeUser;
+
+                const logIn = await axios.post(userAPIBaseUrl + "/login", testLoginCredentials);
+
+                const userWithNewUsername = await axios.put(userAPIBaseUrl + "/change-username", { username: "testUsername" }, {
+                    headers: {
+                        Cookie: logIn.headers["set-cookie"]
+                    }
+                }).catch( err => {
+                    expect(err.response.status).toBe(409);
+                    expect(err.response.data).toEqual({ error: "Username already taken" });
+                });
+
+                expect(userWithNewUsername).toBeUndefined();
+            });
+        })
+
         describe("/account-verification", () => {
             it("Should return updated user(status: 'Active') when successfully", async () => {
                 const createAccount = await initializePendingAccount();
@@ -282,6 +338,26 @@ describe("unit", () => {
                 .catch( err => {
                     expect(err.response.status).toBe(409);
                     expect(err.response.data).toEqual({error: "Username already taken"});
+                })
+
+                expect(createNewMember).toBeUndefined();
+            });
+
+            it("Should return error when the user don't have a tenantId", async () => {
+                const newUser = await initializeActiveAccountNoTenantId();
+                const logIn = await axios.post(userAPIBaseUrl + "/login", { username: testUser.username, password: testUser.password });
+
+                const createNewMember = await axios.post(userAPIBaseUrl + "/group/create-member-account", 
+                { username: "testMemberUsername", password: "testMemberPassword" }, 
+                { headers: 
+                    {
+                        Cookie: logIn.headers["set-cookie"]
+                    }
+                }
+                )
+                .catch( err => {
+                    expect(err.response.status).toBe(403);
+                    expect(err.response.data).toEqual({error: "User must have a tenantId"});
                 })
 
                 expect(createNewMember).toBeUndefined();

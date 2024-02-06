@@ -76,7 +76,7 @@ passport.use(new GoogleStrategy({
         if(!user){
             user = await USER_CRUD.create({
                 googleId: profile.id,
-                username: profile.displayName,
+                username: "",
                 email: profile._json.email,
                 userRole: "Admin",
                 status: "Active"

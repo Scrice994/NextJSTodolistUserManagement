@@ -43,6 +43,14 @@ export const initializeActiveAccount = async () => {
   return initializedUser;
 };
 
+export const initializeActiveAccountNoTenantId = async () => {
+  const passwordRaw = "testPassword";
+  const passwordHashed = await bcrypt.hash(passwordRaw, 10); 
+
+  const initializedUser = await initializeEntity(UserModel, {...testUser, status: "Active", password: passwordHashed, tenantId: ""});
+  return initializedUser;
+};
+
 export const initializePendingAccount = async () => {
   const passwordRaw = "testPassword";
   const passwordHashed = await bcrypt.hash(passwordRaw, 10);

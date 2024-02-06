@@ -14,7 +14,7 @@ import { VerificationTokenRepository } from "../repositories/VeificationTokenRep
 import { HttpClient } from "../utils/HttpClient";
 import { assertIsDefined } from "../utils/assertIsDefined";
 import * as Email from "../utils/emailService";
-import { LogInBody, SendVerificationEmailBody, SignUpBody } from "../validation/users";
+import { ChangeUsernameBody, LogInBody, SendVerificationEmailBody, SignUpBody } from "../validation/users";
 
 const USER_DATA_STORAGE = new MongoDataStorage<UserEntity>(UserModel);
 const USER_REPOSITORY = new UserRepository(USER_DATA_STORAGE);
@@ -118,6 +118,31 @@ interface AccountVerificationQueryParams{
     verificationCode: string
 }
 
+export const changeUsername: RequestHandler<unknown, unknown, ChangeUsernameBody, unknown> = async (req, res, next) => {
+    const { username } = req.body;
+    const authenticatedUser = req.user;
+    try{
+        assertIsDefined(authenticatedUser);
+        const { id: userId } = authenticatedUser;
+
+        if(!username){
+            throw createHttpError(400, "Invalid username");
+        }
+
+        const findExistingUsername = await USER_CRUD.readOne({ username });
+        
+        if(findExistingUsername){
+            throw createHttpError(409, "Username already taken")
+        }
+
+        const updatedUser = await USER_CRUD.updateOne({  id: userId, username })
+
+        res.status(200).json(updatedUser);
+    } catch (error) {
+        next(error);
+    }
+}
+
 export const accountVerification: RequestHandler<unknown, unknown, unknown, AccountVerificationQueryParams> = async (req, res, next) => {
     const { userId, verificationCode } = req.query;
     try {
@@ -166,6 +191,9 @@ export const createNewGroupMember: RequestHandler<unknown, unknown, LogInBody, u
     const authenticatedUser = req.user;
     try {
         assertIsDefined(authenticatedUser);
+        if(!authenticatedUser.tenantId){
+            throw createHttpError(403, "User must have a tenantId");
+        }
 
         const findExistingUsername = await USER_CRUD.readOne({ username });
 
