@@ -9,10 +9,13 @@ import env from "../env";
 import { UserEntity } from "../models/UserEntity";
 import UserModel from "../models/mongo/userSchema";
 import { UserRepository } from "../repositories/UserRepository";
+import { Producer } from "../amqp/producer";
+
 
 const DATA_STORAGE = new MongoDataStorage<UserEntity>(UserModel);
 const USER_REPOSITORY = new UserRepository(DATA_STORAGE);
 const USER_CRUD = new UserCRUD(USER_REPOSITORY);
+const eventProducer = new Producer();
 
 passport.serializeUser((user, cb) => {
     const serializedUser = {
@@ -57,6 +60,13 @@ passport.use(new LocalStrategy( async (username, password, cb) => {
 
         delete user.password;
 
+        await eventProducer.publishMessage("user", "user_login", {
+            username: user.username,
+            userId: user.id,
+            tenantId: user.tenantId,
+            userRole: user.userRole
+        });
+
         return cb(null, user);
 
     } catch (error) {
@@ -82,6 +92,13 @@ passport.use(new GoogleStrategy({
                 status: "Active"
             });
         }
+
+        await eventProducer.publishMessage("user", "user_login", {
+            username: user.username,
+            userId: user.id,
+            tenantId: user.tenantId,
+            userRole: user.userRole
+        });
 
         cb(null, user);
     } catch (error) {
