@@ -1,7 +1,7 @@
-import { UserEntity } from "src/models/UserEntity";
+import { UserEntity } from "../models/UserEntity";
 import { IRepository } from "./IRepository";
-import { IEntity } from "src/models/IEntity";
-import { IDataStorage } from "src/dataStorage/IDataStorage";
+import { IEntity } from "../models/IEntity";
+import { IDataStorage } from "../dataStorage/IDataStorage";
 
 export class UserRepository implements IRepository<UserEntity>{
     constructor(private dataStorage: IDataStorage<UserEntity>){}

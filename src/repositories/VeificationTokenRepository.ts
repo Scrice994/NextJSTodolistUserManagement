@@ -1,7 +1,7 @@
-import { VerificationTokenEntity } from "src/models/VerificationTokenEntity";
+import { VerificationTokenEntity } from "../models/VerificationTokenEntity";
 import { IRepository } from "./IRepository";
-import { IEntity } from "src/models/IEntity";
-import { IDataStorage } from "src/dataStorage/IDataStorage";
+import { IEntity } from "../models/IEntity";
+import { IDataStorage } from "../dataStorage/IDataStorage";
 
 export class VerificationTokenRepository implements IRepository<VerificationTokenEntity>{
     constructor(private dataStorage: IDataStorage<VerificationTokenEntity>){}

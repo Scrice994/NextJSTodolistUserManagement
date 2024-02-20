@@ -14,7 +14,7 @@ export const app = express();
 
 app.use(express.json());
 app.use(cors({
-    origin: env.TODOLIST_BACKEND_URL,
+    origin: [env.TODOLIST_BACKEND_URL, "http://localhost:3001"],
     credentials: true
 }));
 

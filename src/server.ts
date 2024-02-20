@@ -4,7 +4,7 @@ import env from "./env";
 
 const port = env.PORT;
 
-mongoose.connect("mongodb://127.0.0.1:27017/TodoList")
+mongoose.connect(env.MONGO_CONNECTION_URL)
 .then(() => {
     console.log("UserManagement connect to MONGO");
     app.listen(port, () => {

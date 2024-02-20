@@ -15,6 +15,7 @@ import { HttpClient } from "../utils/HttpClient";
 import { assertIsDefined } from "../utils/assertIsDefined";
 import * as Email from "../utils/emailService";
 import { ChangeUsernameBody, LogInBody, SendVerificationEmailBody, SignUpBody } from "../validation/users";
+import env from "../env";
 
 const USER_DATA_STORAGE = new MongoDataStorage<UserEntity>(UserModel);
 const USER_REPOSITORY = new UserRepository(USER_DATA_STORAGE);
@@ -75,7 +76,7 @@ export const signup: RequestHandler<unknown, unknown, SignUpBody, unknown> =  as
         });
         
         await httpClient.sendRequest(
-            "http://localhost:4000/send-verification-email", {
+            env.SERVER_URL + "/send-verification-email", {
             method: 'post', 
             body: { username, email, userId: newUser.id, verificationCode }
         });

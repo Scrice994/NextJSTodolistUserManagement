@@ -1,5 +1,5 @@
-import { DataStorageId } from "src/dataStorage/IDataStorage";
-import { IEntity } from "src/models/IEntity";
+import { DataStorageId } from "../dataStorage/IDataStorage";
+import { IEntity } from "../models/IEntity";
 
 export interface IRepository<T extends IEntity>{
     add(obj: Omit<T, 'id'>): Promise<T>;

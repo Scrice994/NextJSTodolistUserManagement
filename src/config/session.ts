@@ -15,7 +15,7 @@ const sessionConfig: SessionOptions = {
     },
     rolling: true,
     store: MongoStore.create({
-        mongoUrl: "mongodb://127.0.0.1:27017/TodoList"
+        mongoUrl: env.MONGO_SESSION_STORE_URL
     })
 }
 
